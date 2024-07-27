@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft 賺取代幣系統</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Minecraft 賺取代幣系統</h1>
+        <form id="mc-form">
+            <label for="mc_id">Minecraft ID:</label>
+            <input type="text" id="mc_id" name="mc_id" placeholder="輸入你的 Minecraft ID" required>
+            <button type="submit">提交</button>
+        </form>
+        <h2>代幣數量: <span id="tokens">0</span></h2>
+    </div>
+
+    <script>
+        document.getElementById('mc-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const mcId = document.getElementById('mc_id').value;
+
+            fetch('https://your-backend-url/api/tokens', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ mc_id: mcId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('tokens').textContent = data.tokens;
+            })
+            .catch(error => console.error('錯誤:', error));
+        });
+    </script>
+</body>
+</html>
