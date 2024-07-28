@@ -1,40 +1,99 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minecraft 賺取代幣系統</title>
-    <link rel="stylesheet" href="style.css">
+    <title>MC ID Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #content {
+            margin-top: 50px;
+            text-align: center;
+        }
+        #mc-id {
+            display: none;
+        }
+        #info {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Minecraft 賺取代幣系統</h1>
-        <form id="mc-form">
-            <label for="mc_id">Minecraft ID:</label>
-            <input type="text" id="mc_id" name="mc_id" placeholder="輸入你的 Minecraft ID" required>
-            <button type="submit">提交</button>
-        </form>
-        <h2>代幣數量: <span id="tokens">0</span></h2>
+    <div id="content">
+        <div id="mc-id">
+            <label for="mcIdInput">Enter your MC ID:</label>
+            <input type="text" id="mcIdInput" />
+            <button onclick="login()">Login</button>
+        </div>
+        <div id="info">
+            <p id="displayId"></p>
+            <p id="tokenCount"></p>
+        </div>
     </div>
 
     <script>
-        document.getElementById('mc-form').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const mcId = document.getElementById('mc_id').value;
+        let mcId;
+        let tokenCount = 0;
 
-            fetch('https://your-backend-url/api/tokens', {
+        function checkIP() {
+            fetch('/api/check-ip')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.mcId) {
+                        mcId = data.mcId;
+                        tokenCount = data.tokens;
+                        updateDisplay();
+                        startTokenCounter();
+                    } else {
+                        document.getElementById('mc-id').style.display = 'block';
+                    }
+                });
+        }
+
+        function login() {
+            mcId = document.getElementById('mcIdInput').value;
+            fetch('/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ mc_id: mcId })
+                body: JSON.stringify({ mcId: mcId })
             })
             .then(response => response.json())
             .then(data => {
-                document.getElementById('tokens').textContent = data.tokens;
-            })
-            .catch(error => console.error('錯誤:', error));
-        });
+                if (data.success) {
+                    tokenCount = data.tokens;
+                    updateDisplay();
+                    startTokenCounter();
+                } else {
+                    alert('Login failed');
+                }
+            });
+        }
+
+        function updateDisplay() {
+            document.getElementById('mc-id').style.display = 'none';
+            document.getElementById('displayId').textContent = `MC ID: ${mcId}`;
+            document.getElementById('tokenCount').textContent = `Tokens: ${tokenCount}`;
+        }
+
+        function startTokenCounter() {
+            setInterval(() => {
+                tokenCount++;
+                document.getElementById('tokenCount').textContent = `Tokens: ${tokenCount}`;
+                fetch('/api/update-tokens', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ mcId: mcId, tokens: tokenCount })
+                });
+            }, 60000);
+        }
+
+        checkIP();
     </script>
 </body>
 </html>
